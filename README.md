@@ -4,14 +4,18 @@ Watatsumi is a Data Lake skeleton that runs on top of Delta Lake / (Azure) Datab
 The name Watatsumi・ワタツミ・海神・綿津見 refers to the Japanese deity of water (since we are building a data 'lake').
 
 # Infrastructure
-<TODO: embed pic (overview) https://drive.google.com/file/d/1Td5PqGp9YpUaolBM0zNR-BE5y6EIOVy0/view?usp=sharing >
+
+![](/doc/watatsumi-overview.jpg)
+
 * Need a 'cicd' environment to run integration tests
 * Need Azure Key Vault to store the credentials
 * Each environment gets a dedicated Blob Container for segregation purpose
 
 # Convention
-<TODO: embed pic (container) https://drive.google.com/file/d/1Td5PqGp9YpUaolBM0zNR-BE5y6EIOVy0/view?usp=sharing >
 Inside each Blob Container, directories are organized following below convention,
+
+![](/doc/watatsumi-container.jpg)
+
 ```
 \
 |-landing_zone
@@ -58,7 +62,7 @@ SELECT date AS slice_id, MAX( COALESCE(deleted_at, created_at) ) AS watermark
 ```
 By comparing slice_id+watermark, we will know which slices need to be overriden in the Lake.
 
-<TODO: embed pic (slice-based ingestion) https://drive.google.com/file/d/1Td5PqGp9YpUaolBM0zNR-BE5y6EIOVy0/view?usp=sharing >
+![](/doc/watatsumi-slice-based%20ingestion.jpg)
 
 **Note that slice-based ingestion does not guarantee 100% accuracy**
 
@@ -82,7 +86,7 @@ Fill in '002.env_config' _WATATSUMI_YAML (no need to manually mount as Watatsumi
 
 To test whether Watatsumi dev environment is ready, create a Notebook and try this,
 
-<TODO: embed pic (hello watatsumi) https://drive.google.com/file/d/1Td5PqGp9YpUaolBM0zNR-BE5y6EIOVy0/view?usp=sharing >
+![](/doc/watatsumi-hello%20watatsumi.jpg)
 
 # Integration Test
 
