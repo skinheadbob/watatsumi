@@ -1,0 +1,58 @@
+resources:
+  - repo: self
+
+trigger:
+  - dev
+
+variables:
+  databricks-host: 'https://[your_databricks_host].azuredatabricks.net/'
+  notebook-folder: '/[path_to_000_init]/000_init/'
+  cluster-id: '[your_databricks_cluster_id]'
+  notebook-name: '999.run_integration_tests'
+
+steps:
+- task: UsePythonVersion@0
+  displayName: 'Use Python 3.x'
+
+- script: |
+    pip install databricks-cli
+  displayName: 'Install databricks-cli'
+
+- script: |
+
+   JOB_ID=$(databricks jobs create --json '{
+     "name": "run-integration-tests-job",
+     "existing_cluster_id": "$(cluster-id)",
+     "timeout_seconds": 3600,
+     "max_retries": 1,
+     "notebook_task": {
+       "notebook_path": "$(notebook-folder)$(notebook-name)",
+       "base_parameters": {}
+     }
+   }' | jq '.job_id')
+
+   RUN_ID=$(databricks jobs run-now --job-id $JOB_ID | jq '.run_id')
+
+   job_status="PENDING"
+   while [ $job_status = "RUNNING" ] || [ $job_status = "PENDING" ]
+   do
+     sleep 10
+     job_status=$(databricks runs get --run-id $RUN_ID | jq -r '.state.life_cycle_state')
+     echo Status $job_status
+   done
+
+   RESULT=$(databricks runs get-output --run-id $RUN_ID)
+
+   RESULT_STATE=$(echo $RESULT | jq -r '.metadata.state.result_state')
+   RESULT_MESSAGE=$(echo $RESULT | jq -r '.metadata.state.state_message')
+   if [ $RESULT_STATE = "FAILED" ]
+   then
+     echo "##vso[task.logissue type=error;]$RESULT_MESSAGE"
+     echo "##vso[task.complete result=Failed;done=true;]$RESULT_MESSAGE"
+   fi
+
+   echo $RESULT | jq .
+  displayName: 'Run Databricks integration-test Notebook'
+  env:
+    DATABRICKS_TOKEN: $(databricks-token)
+    DATABRICKS_HOST: $(databricks-host)
